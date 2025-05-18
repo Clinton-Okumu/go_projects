@@ -9,5 +9,7 @@ func SetUpRoutes(app *app.Application) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/health", app.HealthChecker)
+	r.Get("/workout/{id}", app.WorkoutHandler.HandleGetWorkoutByID)
+	r.Post("/workout", app.WorkoutHandler.HandleCreateWorkout)
 	return r
 }
