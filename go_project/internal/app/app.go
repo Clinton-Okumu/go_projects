@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go_project/internal/api"
 	"go_project/internal/store"
+	"go_project/migrations"
 	"log"
 	"net/http"
 	"os"
@@ -21,6 +22,11 @@ func NewApplication() (*Application, error) {
 	pgDB, err := store.Open()
 	if err != nil {
 		return nil, err
+	}
+	
+	err = store.MigrateFS(pgDB, migrations.FS, ".")
+	if err != nil {
+		panic(err)
 	}
 
 	//handler
