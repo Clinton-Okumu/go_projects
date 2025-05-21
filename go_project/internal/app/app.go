@@ -3,25 +3,33 @@ package app
 import (
 	"fmt"
 	"go_project/internal/api"
+	"go_project/internal/store"
 	"log"
 	"net/http"
 	"os"
+	"database/sql"
 )
 
 type Application struct {
-	Logger *log.Logger
+	Logger         *log.Logger
 	WorkoutHandler *api.WorkoutHandler
+	DB             *sql.DB
 }
 
 func NewApplication() (*Application, error) {
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	pgDB, err := store.Open()
+	if err != nil {
+		return nil, err
+	}
 
 	//handler
 	workoutHandler := api.NewWorkoutHandler()
 
 	app := &Application{
-		Logger: logger,
+		Logger:         logger,
 		WorkoutHandler: workoutHandler,
+		DB:             pgDB,
 	}
 
 	return app, nil
