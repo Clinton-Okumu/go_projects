@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 	"go_project/internal/api"
 	"go_project/internal/store"
@@ -8,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"database/sql"
 )
 
 type Application struct {
@@ -18,19 +18,23 @@ type Application struct {
 }
 
 func NewApplication() (*Application, error) {
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 	pgDB, err := store.Open()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	err = store.MigrateFS(pgDB, migrations.FS, ".")
 	if err != nil {
 		panic(err)
 	}
 
-	//handler
-	workoutHandler := api.NewWorkoutHandler()
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+	// stores will go here
+	workoutStore := store.NewPostgresWorkoutStore(pgDB)
+
+	//handlers
+	workoutHandler := api.NewWorkoutHandler(workoutStore)
 
 	app := &Application{
 		Logger:         logger,
