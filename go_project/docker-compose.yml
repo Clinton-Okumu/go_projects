@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: "workoutDB"
+    container_name: "workoutDB_dev"
     image: "postgres:16-alpine"
     ports:
       - "5433:5432"
@@ -12,5 +12,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  test_db:
+    container_name: "workoutDB_test"
+    image: "postgres:16-alpine"
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: "testuser"
+      POSTGRES_PASSWORD: "testpassword"
+      POSTGRES_DB: "testdb"
+    restart: unless-stopped
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
 volumes:
   postgres_data:
+  postgres_test_data:

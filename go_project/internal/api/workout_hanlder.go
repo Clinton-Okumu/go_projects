@@ -2,14 +2,10 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"go_project/internal/store"
 	"go_project/internal/utils"
 	"log"
 	"net/http"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type WorkoutHandler struct {
