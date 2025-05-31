@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/go-chi/chi/v5"
 	"go_project/internal/app"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func SetUpRoutes(app *app.Application) *chi.Mux {
@@ -13,5 +14,7 @@ func SetUpRoutes(app *app.Application) *chi.Mux {
 	r.Post("/workout", app.WorkoutHandler.HandleCreateWorkout)
 	r.Put("/workout/{id}", app.WorkoutHandler.HandleUpdateByID)
 	r.Delete("/workout/{id}", app.WorkoutHandler.HandleDeleteByID)
+
+	r.Post("/users", app.UserHandler.HandleRegisterUser)
 	return r
 }

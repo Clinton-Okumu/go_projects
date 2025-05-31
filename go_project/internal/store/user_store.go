@@ -2,14 +2,41 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	_ "golang.org/x/crypto/bcrypt"
 )
 
 type password struct {
 	plaintext *string
 	hash      []byte
+}
+
+func (p *password) Set(plaintextPassword string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(plaintextPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	p.plaintext = &plaintextPassword
+	p.hash = hash
+
+	return nil
+}
+
+func (p *password) Matches(plaintextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plaintextPassword))
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 type User struct {
@@ -37,8 +64,7 @@ type UserStore interface {
 }
 
 func (s *PostgresUserStore) CreateUser(user *User) error {
-	query :=
-		`INSERT INTO users (username, email, password_hash, bio)
+	query := `INSERT INTO users (username, email, password_hash, bio)
 	VALUES ($1, $2, $3, $4)
 	RETURNING id, created_at, updated_at`
 
@@ -54,8 +80,7 @@ func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
 		PasswordHash: password{},
 	}
 
-	query :=
-		`SELECT id , username, email, password_hash, bio, created_at, updated_at
+	query := `SELECT id , username, email, password_hash, bio, created_at, updated_at
 	FROM users
 	WHERE username = $1
 	`
@@ -71,8 +96,7 @@ func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
 }
 
 func (s *PostgresUserStore) UpdateUser(user *User) error {
-	query :=
-		`UPDATE Users 
+	query := `UPDATE Users 
 		SET username = $1, email = $2, bio = $3, updated_at = CURRENT_TIMESTAMP
 		WHERE id = $4
 		RETURNING updated_at

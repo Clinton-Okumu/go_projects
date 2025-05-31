@@ -34,7 +34,7 @@ func TestCreateWorkout(t *testing.T) {
 	defer db.Close()
 
 	store := NewPostgresWorkoutStore(db)
-	//userStore := NewPostgresUserStore(db)
+	// userStore := NewPostgresUserStore(db)
 
 	//testUser := &User{
 	//	Username: "melkey",
@@ -42,10 +42,10 @@ func TestCreateWorkout(t *testing.T) {
 	//}
 
 	//	err := testUser.PasswordHash.Set("securepassword")
-	//require.NoError(t, err)
+	// require.NoError(t, err)
 
-	//err = userStore.CreateUser(testUser)
-	//require.NoError(t, err)
+	// err = userStore.CreateUser(testUser)
+	// require.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -55,7 +55,7 @@ func TestCreateWorkout(t *testing.T) {
 		{
 			name: "valid workout",
 			workout: &Workout{
-				//userID:          testUser.ID,
+				// userID:          testUser.ID,
 				Title:             "push day",
 				Description:       "upper body day",
 				DurationInMinutes: 60,
@@ -76,7 +76,7 @@ func TestCreateWorkout(t *testing.T) {
 		{
 			name: "workout with invalid entries",
 			workout: &Workout{
-				//UserID:          testUser.ID,
+				// UserID:          testUser.ID,
 				Title:             "full body",
 				Description:       "complete workout",
 				DurationInMinutes: 90,
@@ -128,7 +128,6 @@ func TestCreateWorkout(t *testing.T) {
 				assert.Equal(t, tt.workout.Entries[i].Sets, retrieved.Entries[i].Sets)
 				assert.Equal(t, tt.workout.Entries[i].OrderIndex, retrieved.Entries[i].OrderIndex)
 			}
-
 		})
 	}
 }
