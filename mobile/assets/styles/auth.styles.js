@@ -31,6 +31,23 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text,
   },
+  passwordField: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  passwordInput: {
+    marginBottom: 0,
+    paddingRight: 52,
+  },
+  passwordToggle: {
+    position: "absolute",
+    right: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 44,
+  },
   errorInput: {
     borderColor: COLORS.expense,
   },

@@ -12,8 +12,10 @@ export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
 
+  const [username, setUsername] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -22,9 +24,25 @@ export default function SignUpScreen() {
   const onSignUpPress = async () => {
     if (!isLoaded) return;
 
+    if (!username.trim()) {
+      setError("Username is required.");
+      return;
+    }
+
+    if (!emailAddress.trim()) {
+      setError("Email is required.");
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
+
     // Start sign-up process using email and password provided
     try {
       await signUp.create({
+        username,
         emailAddress,
         password,
       });
@@ -61,14 +79,20 @@ export default function SignUpScreen() {
         await setActive({ session: signUpAttempt.createdSessionId });
         router.replace("/");
       } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error(JSON.stringify(signUpAttempt, null, 2));
+        // User is verified, but sign-up is not complete (e.g. missing fields)
+        const missing = (signUpAttempt as any)?.missingFields;
+        if (Array.isArray(missing) && missing.includes("username")) {
+          setPendingVerification(false);
+          setError("Please choose a username to continue.");
+        } else {
+          setError("Sign up is not complete. Please try again.");
+        }
       }
     } catch (err) {
       // See https://clerk.com/docs/custom-flows/error-handling
       // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+      console.log(err);
+      setError("Verification failed. Please try again.");
     }
   };
 
@@ -130,20 +154,47 @@ export default function SignUpScreen() {
         <TextInput
           style={[styles.input, error && styles.errorInput]}
           autoCapitalize="none"
+          value={username}
+          placeholderTextColor="#9A8478"
+          placeholder="Choose username"
+          onChangeText={(v) => setUsername(v)}
+        />
+
+        <TextInput
+          style={[styles.input, error && styles.errorInput]}
+          autoCapitalize="none"
           value={emailAddress}
           placeholderTextColor="#9A8478"
           placeholder="Enter email"
           onChangeText={(email) => setEmailAddress(email)}
         />
 
-        <TextInput
-          style={[styles.input, error && styles.errorInput]}
-          value={password}
-          placeholder="Enter password"
-          placeholderTextColor="#9A8478"
-          secureTextEntry={true}
-          onChangeText={(password) => setPassword(password)}
-        />
+        <View style={styles.passwordField}>
+          <TextInput
+            style={[
+              styles.input,
+              styles.passwordInput,
+              error && styles.errorInput,
+            ]}
+            value={password}
+            placeholder="Enter password"
+            placeholderTextColor="#9A8478"
+            secureTextEntry={!showPassword}
+            onChangeText={(password) => setPassword(password)}
+          />
+          <TouchableOpacity
+            style={styles.passwordToggle}
+            onPress={() => setShowPassword((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              color={COLORS.textLight}
+            />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.button} onPress={onSignUpPress}>
           <Text style={styles.buttonText}>Sign Up</Text>

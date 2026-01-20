@@ -2,8 +2,10 @@ package middleware
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"go_project/internal/auth/clerkjwt"
 	"go_project/internal/store"
-	"go_project/internal/tokens"
 	"go_project/internal/utils"
 	"net/http"
 	"strings"
@@ -47,16 +49,58 @@ func (um *UserMiddleware) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		token := headerParts[1]
-		user, err := um.UserStore.GetUserToken(tokens.ScopeAuth, token)
+		tokenString := headerParts[1]
+		claims, err := clerkjwt.Verify(tokenString)
 		if err != nil {
 			utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "invalid token"})
 			return
 		}
-		if user == nil {
-			utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "invalid or expired token"})
+
+		user, err := um.UserStore.GetUserByClerkID(claims.Subject)
+		if err != nil {
+			utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
 			return
 		}
+
+		if user == nil {
+			email := strings.TrimSpace(claims.Email)
+			if email == "" {
+				utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "token missing email claim"})
+				return
+			}
+			username := "user_" + claims.Subject
+			if email != "" {
+				if parts := strings.Split(email, "@"); len(parts) > 0 && parts[0] != "" {
+					username = parts[0]
+				}
+			}
+
+			var pwBytes [16]byte
+			_, _ = rand.Read(pwBytes[:])
+			pw := hex.EncodeToString(pwBytes[:])
+
+			newUser := &store.User{Username: username, Email: email, ClerkUserID: claims.Subject}
+			_ = newUser.PasswordHash.Set(pw)
+
+			err = um.UserStore.CreateUser(newUser)
+			if err != nil {
+				if email != "" {
+					existingByEmail, getErr := um.UserStore.GetUserByEmail(email)
+					if getErr == nil && existingByEmail != nil {
+						existingByEmail.ClerkUserID = claims.Subject
+						_ = um.UserStore.UpdateUser(existingByEmail)
+						user = existingByEmail
+					}
+				}
+				if user == nil {
+					utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+					return
+				}
+			} else {
+				user = newUser
+			}
+		}
+
 		r = SetUser(r, user)
 		next.ServeHTTP(w, r)
 	})

@@ -61,6 +61,7 @@ func (p *password) Scan(value interface{}) error {
 
 type User struct {
 	ID           int       `gorm:"primaryKey" json:"id"`
+	ClerkUserID  string    `gorm:"uniqueIndex" json:"-"`
 	Username     string    `gorm:"not null" json:"username"`
 	Email        string    `gorm:"uniqueIndex;not null" json:"email"`
 	PasswordHash password  `gorm:"not null" json:"-"`
@@ -86,6 +87,8 @@ func NewPostgresUserStore(db *gorm.DB) *PostgresUserStore {
 type UserStore interface {
 	CreateUser(*User) error
 	GetUserByUsername(username string) (*User, error)
+	GetUserByEmail(email string) (*User, error)
+	GetUserByClerkID(clerkUserID string) (*User, error)
 	UpdateUser(*User) error
 	GetUserToken(scope, tokenPlainText string) (*User, error)
 }
@@ -97,6 +100,30 @@ func (s *PostgresUserStore) CreateUser(user *User) error {
 func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
 	var user User
 	err := s.db.Where("username = ?", username).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (s *PostgresUserStore) GetUserByEmail(email string) (*User, error) {
+	var user User
+	err := s.db.Where("email = ?", email).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (s *PostgresUserStore) GetUserByClerkID(clerkUserID string) (*User, error) {
+	var user User
+	err := s.db.Where("clerk_user_id = ?", clerkUserID).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
