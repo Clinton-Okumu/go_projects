@@ -2,12 +2,12 @@ package store
 
 import (
 	"crypto/sha256"
-	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	_ "golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type password struct {
@@ -40,14 +40,33 @@ func (p *password) Matches(plaintextPassword string) (bool, error) {
 	return true, nil
 }
 
+// Value implements the driver.Valuer interface for GORM
+func (p password) Value() (driver.Value, error) {
+	return p.hash, nil
+}
+
+// Scan implements the sql.Scanner interface for GORM
+func (p *password) Scan(value interface{}) error {
+	if value == nil {
+		p.hash = nil
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("password hash must be []byte")
+	}
+	p.hash = bytes
+	return nil
+}
+
 type User struct {
-	ID           int       `json:"id"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash password  `json:"-"`
+	ID           int       `gorm:"primaryKey" json:"id"`
+	Username     string    `gorm:"not null" json:"username"`
+	Email        string    `gorm:"uniqueIndex;not null" json:"email"`
+	PasswordHash password  `gorm:"not null" json:"-"`
 	Bio          string    `json:"bio"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	CreatedAt    time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 var AnonymousUser = &User{}
@@ -57,10 +76,10 @@ func (u *User) IsAnonymous() bool {
 }
 
 type PostgresUserStore struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
+func NewPostgresUserStore(db *gorm.DB) *PostgresUserStore {
 	return &PostgresUserStore{db: db}
 }
 
@@ -72,89 +91,37 @@ type UserStore interface {
 }
 
 func (s *PostgresUserStore) CreateUser(user *User) error {
-	query := `INSERT INTO users (username, email, password_hash, bio)
-	VALUES ($1, $2, $3, $4)
-	RETURNING id, created_at, updated_at`
-
-	err := s.db.QueryRow(query, user.Username, user.Email, user.PasswordHash.hash, user.Bio).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.db.Create(user).Error
 }
 
 func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
-	user := &User{
-		PasswordHash: password{},
-	}
-
-	query := `SELECT id , username, email, password_hash, bio, created_at, updated_at
-	FROM users
-	WHERE username = $1
-	`
-	err := s.db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash.hash, &user.Bio, &user.CreatedAt, &user.UpdatedAt)
-	if err == sql.ErrNoRows {
+	var user User
+	err := s.db.Where("username = ?", username).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
-
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return &user, nil
 }
 
 func (s *PostgresUserStore) UpdateUser(user *User) error {
-	query := `UPDATE Users 
-		SET username = $1, email = $2, bio = $3, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $4
-		RETURNING updated_at
-	`
-
-	result, err := s.db.Exec(query, user.Username, user.Email, user.Bio, user.ID)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected != 0 {
-		return err
-	}
-	return nil
+	return s.db.Save(user).Error
 }
 
 func (s *PostgresUserStore) GetUserToken(scope, plaintextPassword string) (*User, error) {
 	tokenHash := sha256.Sum256([]byte(plaintextPassword))
-	query := `
-	SELECT u.id, u.username, u.email, u.password_hash, u.bio, u.created_at, u.updated_at
-	FROM users u
-	INNER JOIN tokens t ON t.user_id = u.id
-	WHERE t.hash = $1 AND t.scope = $2 and t.expiry > $3
-	`
-
-	user := &User{
-		PasswordHash: password{},
-	}
-
-	err := s.db.QueryRow(query, tokenHash[:], scope, time.Now()).Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
-		&user.PasswordHash.hash,
-		&user.Bio,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	)
-
-	if err == sql.ErrNoRows {
+	var user User
+	err := s.db.Joins("JOIN tokens t ON t.user_id = users.id").
+		Where("t.hash = ? AND t.scope = ? AND t.expiry > ?", tokenHash[:], scope, time.Now()).
+		Select("users.id, users.username, users.email, users.password_hash, users.bio, users.created_at, users.updated_at").
+		First(&user).Error
+	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
-
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return &user, nil
 }

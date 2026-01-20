@@ -6,32 +6,44 @@ import (
 	"go_project/internal/app"
 	"go_project/internal/routes"
 	"net/http"
+	"os"
 	"time"
 )
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8081, "Go backend server port")
-	flag.Parse()
+	// 1. Read PORT from env first (deployment standard)
+	port := os.Getenv("PORT")
+	if port == "" {
+		// fallback to flag
+		flagPort := flag.Int("port", 8081, "Go backend server port")
+		flag.Parse()
+		port = fmt.Sprintf("%d", *flagPort)
+	}
 
-	app, err := app.NewApplication()
+	application, err := app.NewApplication()
 	if err != nil {
 		panic(err)
 	}
-	defer app.DB.Close()
-	r := routes.SetUpRoutes(app)
+	defer application.DB.Close()
+
+	router := routes.SetUpRoutes(application)
 
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      r,
+		Addr:         "0.0.0.0:" + port,
+		Handler:      router,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
-	app.Logger.Printf("Starting server on port %d", port)
+	// 2. Log the actual backend URL
+	application.Logger.Printf(
+		"Backend running at http://localhost:%s",
+		port,
+	)
+
 	err = server.ListenAndServe()
-	if err != nil {
-		app.Logger.Fatal(err)
+	if err != nil && err != http.ErrServerClosed {
+		application.Logger.Fatal(err)
 	}
 }

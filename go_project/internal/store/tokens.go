@@ -1,16 +1,17 @@
 package store
 
 import (
-	"database/sql"
 	"go_project/internal/tokens"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type PostgresTokenStore struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewPostgresTokenStore(db *sql.DB) *PostgresTokenStore {
+func NewPostgresTokenStore(db *gorm.DB) *PostgresTokenStore {
 	return &PostgresTokenStore{
 		db: db,
 	}
@@ -33,13 +34,14 @@ func (t *PostgresTokenStore) CreateNewToken(userID int, ttl time.Duration, scope
 }
 
 func (t *PostgresTokenStore) Insert(token *tokens.Token) error {
-	query := `INSERT INTO tokens (hash, user_id, expiry, scope) VALUES ($1, $2, $3, $4)`
-	_, err := t.db.Exec(query, token.Hash, token.UserID, token.Expiry, token.Scope)
-	return err
+	return t.db.Create(&Token{
+		Hash:   token.Hash,
+		UserID: token.UserID,
+		Expiry: token.Expiry,
+		Scope:  token.Scope,
+	}).Error
 }
 
 func (t *PostgresTokenStore) DeleteAllTokensForUser(userID int, scope string) error {
-	query := `DELETE FROM tokens WHERE user_id = $1 AND scope = $2`
-	_, err := t.db.Exec(query, userID, scope)
-	return err
+	return t.db.Where("user_id = ? AND scope = ?", userID, scope).Delete(&Token{}).Error
 }

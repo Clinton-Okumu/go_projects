@@ -39,8 +39,29 @@ A RESTful API for managing user workouts, built with Go, the Chi router, and a m
 ### Prerequisites
 
 - Go 1.20+
-- Docker (for DB)
-- PostgreSQL (or your configured DB)
+- PostgreSQL (running locally or remotely)
+
+### Environment Variables
+
+Create a `.env` file in the project root with the following variables:
+
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
+```
+
+Or set them as environment variables:
+
+```bash
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USER=your_db_user
+export DB_PASSWORD=your_db_password
+export DB_NAME=your_db_name
+```
 
 ### Run Locally
 
@@ -49,11 +70,7 @@ A RESTful API for managing user workouts, built with Go, the Chi router, and a m
 git clone https://github.com/Clinton-okumu/go_project.git
 cd go_project
 
-# Start DB service
-docker-compose up -d
+# Set environment variables (see above)
 
-# Run migrations (assuming you're using something like golang-migrate or goose)
-# migrate -path ./migrations -database "postgres://..." up
-
-# Run the server
+# Run the server (migrations run automatically via GORM)
 go run main.go

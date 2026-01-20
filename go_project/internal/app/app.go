@@ -6,7 +6,6 @@ import (
 	"go_project/internal/api"
 	"go_project/internal/middleware"
 	"go_project/internal/store"
-	"go_project/migrations"
 	"log"
 	"net/http"
 	"os"
@@ -22,12 +21,17 @@ type Application struct {
 }
 
 func NewApplication() (*Application, error) {
-	pgDB, err := store.Open()
+	gormDB, err := store.Open()
 	if err != nil {
 		return nil, err
 	}
 
-	err = store.MigrateFS(pgDB, migrations.FS, ".")
+	err = store.AutoMigrate(gormDB)
+	if err != nil {
+		panic(err)
+	}
+
+	sqlDB, err := gormDB.DB()
 	if err != nil {
 		panic(err)
 	}
@@ -35,9 +39,9 @@ func NewApplication() (*Application, error) {
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 	// stores will go here
-	workoutStore := store.NewPostgresWorkoutStore(pgDB)
-	userStore := store.NewPostgresUserStore(pgDB)
-	tokenStore := store.NewPostgresTokenStore(pgDB)
+	workoutStore := store.NewPostgresWorkoutStore(gormDB)
+	userStore := store.NewPostgresUserStore(gormDB)
+	tokenStore := store.NewPostgresTokenStore(gormDB)
 
 	// handlers
 	workoutHandler := api.NewWorkoutHandler(workoutStore, logger)
@@ -51,7 +55,7 @@ func NewApplication() (*Application, error) {
 		UserHandler:    userHandler,
 		TokenHandler:   tokenHandler,
 		Middleware:     midlewareHHandler,
-		DB:             pgDB,
+		DB:             sqlDB,
 	}
 
 	return app, nil
@@ -59,4 +63,8 @@ func NewApplication() (*Application, error) {
 
 func (a *Application) HealthChecker(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Status is available\n")
+}
+
+func (a *Application) Welcome(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Welcome to the ForgeFit API\n")
 }

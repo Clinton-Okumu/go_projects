@@ -1,35 +1,38 @@
 package store
 
 import (
-	"database/sql"
+	"gorm.io/gorm"
 )
 
 type Workout struct {
-	ID                int            `json:"id"`
-	UserID            int            `json:"user_id"`
-	Title             string         `json:"title"`
+	ID                int            `gorm:"primaryKey" json:"id"`
+	UserID            int            `gorm:"not null" json:"user_id"`
+	Title             string         `gorm:"not null" json:"title"`
 	Description       string         `json:"description"`
-	DurationInMinutes int            `json:"duration_in_minutes"`
-	CaloriesBurned    int            `json:"calories_burned"`
-	Entries           []WorkoutEntry `json:"entries"`
+	DurationInMinutes int            `gorm:"not null" json:"duration_in_minutes"`
+	CaloriesBurned    int            `gorm:"not null" json:"calories_burned"`
+	Entries           []WorkoutEntry `gorm:"foreignKey:WorkoutID" json:"entries"`
+	User              User           `gorm:"foreignKey:UserID" json:"-"`
 }
 
 type WorkoutEntry struct {
-	ID                int      `json:"id"`
-	ExerciseName      string   `json:"exercise_name"`
-	Sets              int      `json:"sets"`
+	ID                int      `gorm:"primaryKey" json:"id"`
+	WorkoutID         int      `gorm:"not null" json:"workout_id"`
+	ExerciseName      string   `gorm:"not null" json:"exercise_name"`
+	Sets              int      `gorm:"not null" json:"sets"`
 	Reps              *int     `json:"reps"`
 	DurationInSeconds *int     `json:"duration_in_seconds"`
 	Weight            *float64 `json:"weight"`
 	Notes             string   `json:"notes"`
-	OrderIndex        int      `json:"order_index"`
+	OrderIndex        int      `gorm:"not null" json:"order_index"`
+	Workout           Workout  `gorm:"foreignKey:WorkoutID" json:"-"`
 }
 
 type PostgresWorkoutStore struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewPostgresWorkoutStore(db *sql.DB) *PostgresWorkoutStore {
+func NewPostgresWorkoutStore(db *gorm.DB) *PostgresWorkoutStore {
 	return &PostgresWorkoutStore{db: db}
 }
 
@@ -42,179 +45,77 @@ type WorkoutStore interface {
 }
 
 func (pg *PostgresWorkoutStore) CreateWorkout(workout *Workout) (*Workout, error) {
-	tx, err := pg.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	query := `
-  INSERT INTO workouts (user_id, title, description, duration_in_minutes, calories_burned)
-  VALUES ($1, $2, $3, $4 ,$5)
-  RETURNING id 
-  `
-
-	err = tx.QueryRow(query, workout.UserID, workout.Title, workout.Description, workout.DurationInMinutes, workout.CaloriesBurned).Scan(&workout.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	// we also need to insert the entries
-	for _, entry := range workout.Entries {
-		query := `
-    INSERT INTO workout_entries (workout_id, exercise_name, sets, reps, duration_in_seconds, weight, notes, order_index)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING id
-    `
-		err = tx.QueryRow(query, workout.ID, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationInSeconds, entry.Weight, entry.Notes, entry.OrderIndex).Scan(&entry.ID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	return workout, nil
+	return workout, pg.db.Create(workout).Error
 }
 
 func (pg *PostgresWorkoutStore) GetWorkoutByID(id int64) (*Workout, error) {
-	workout := &Workout{}
-	query := `
-  SELECT id, title, description, duration_in_minutes, calories_burned
-  FROM workouts
-  WHERE id = $1
-  `
-	err := pg.db.QueryRow(query, id).Scan(&workout.ID, &workout.Title, &workout.Description, &workout.DurationInMinutes, &workout.CaloriesBurned)
-	if err == sql.ErrNoRows {
+	var workout Workout
+	err := pg.db.Preload("Entries").First(&workout, int(id)).Error
+	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	// lets get the entries
-	entryQuery := `
-  SELECT id, exercise_name, sets, reps, duration_in_seconds, weight, notes, order_index
-  FROM workout_entries
-  WHERE workout_id = $1
-  ORDER BY order_index
-  `
-
-	rows, err := pg.db.Query(entryQuery, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var entry WorkoutEntry
-		err = rows.Scan(
-			&entry.ID,
-			&entry.ExerciseName,
-			&entry.Sets,
-			&entry.Reps,
-			&entry.DurationInSeconds,
-			&entry.Weight,
-			&entry.Notes,
-			&entry.OrderIndex,
-		)
-		if err != nil {
-			return nil, err
-		}
-		workout.Entries = append(workout.Entries, entry)
-	}
-
-	return workout, nil
+	return &workout, err
 }
 
 func (pg *PostgresWorkoutStore) UpdateWorkout(workout *Workout) error {
-	tx, err := pg.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	query := `
-  UPDATE workouts
-  SET title = $1, description = $2, duration_in_minutes = $3, calories_burned = $4
-  WHERE id = $5
-  `
-	result, err := tx.Exec(query, workout.Title, workout.Description, workout.DurationInMinutes, workout.CaloriesBurned, workout.ID)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return sql.ErrNoRows
-	}
-
-	_, err = tx.Exec(`DELETE FROM workout_entries WHERE workout_id = $1`, workout.ID)
-	if err != nil {
-		return err
-	}
-
-	for _, entry := range workout.Entries {
-		query := `
-    INSERT INTO workout_entries (workout_id, exercise_name, sets, reps, duration_in_seconds, weight, notes, order_index)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING id
-    `
-		_, err := tx.Exec(query,
-			workout.ID,
-			entry.ExerciseName,
-			entry.Sets,
-			entry.Reps,
-			entry.DurationInSeconds,
-			entry.Weight,
-			entry.Notes,
-			entry.OrderIndex,
-		)
-		if err != nil {
+	return pg.db.Transaction(func(tx *gorm.DB) error {
+		// Check if workout exists
+		var existing Workout
+		if err := tx.First(&existing, workout.ID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return gorm.ErrRecordNotFound
+			}
 			return err
 		}
-	}
-	return tx.Commit()
+
+		// Update the workout
+		if err := tx.Model(workout).Updates(map[string]interface{}{
+			"title":               workout.Title,
+			"description":         workout.Description,
+			"duration_in_minutes": workout.DurationInMinutes,
+			"calories_burned":     workout.CaloriesBurned,
+		}).Error; err != nil {
+			return err
+		}
+
+		// Delete existing entries
+		if err := tx.Where("workout_id = ?", workout.ID).Delete(&WorkoutEntry{}).Error; err != nil {
+			return err
+		}
+
+		// Insert new entries
+		for i := range workout.Entries {
+			workout.Entries[i].WorkoutID = workout.ID
+			if err := tx.Create(&workout.Entries[i]).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (pg *PostgresWorkoutStore) DeleteWorkout(id int64) error {
-	query := `
-	DELETE FROM workouts
-	WHERE id = $1
-	`
-	result, err := pg.db.Exec(query, id)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
+	return pg.db.Transaction(func(tx *gorm.DB) error {
+		// Delete entries first
+		if err := tx.Where("workout_id = ?", id).Delete(&WorkoutEntry{}).Error; err != nil {
+			return err
+		}
 
-	if rowsAffected == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
+		// Delete workout
+		result := tx.Delete(&Workout{}, id)
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+		return result.Error
+	})
 }
 
 func (pg *PostgresWorkoutStore) GetWorkoutOwner(workoutID int64) (int, error) {
-	var UserID int
-
-	query := `
-  SELECT user_id
-  FROM workouts
-  WHERE id = $1
-  `
-	err := pg.db.QueryRow(query, workoutID).Scan(&UserID)
-	if err == sql.ErrNoRows {
+	var workout Workout
+	err := pg.db.Select("user_id").First(&workout, workoutID).Error
+	if err == gorm.ErrRecordNotFound {
 		return 0, err
 	}
-
-	return UserID, nil
+	return int(workout.UserID), err
 }

@@ -1,16 +1,30 @@
 package store
 
 import (
-	"database/sql"
 	"fmt"
-	"io/fs"
+	"os"
+	"time"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
-	"github.com/pressly/goose/v3"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func Open() (*sql.DB, error) {
-	db, err := sql.Open("pgx", "host=localhost user=postgres password=postgres dbname=postgres port=5433 sslmode=disable")
+func Open() (*gorm.DB, error) {
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error loading .env file: %w", err)
+	}
+
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, password, dbname, port)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to postgres: %w", err)
 	}
@@ -19,21 +33,15 @@ func Open() (*sql.DB, error) {
 	return db, nil
 }
 
-func MigrateFS(db *sql.DB, migrationsFS fs.FS, dir string) error {
-	goose.SetBaseFS(migrationsFS)
-	defer func() {
-		goose.SetBaseFS(nil)
-	}()
-	return Migrate(db, dir)
+type Token struct {
+	ID     int       `gorm:"primaryKey"`
+	Hash   []byte    `gorm:"uniqueIndex;not null"`
+	UserID int       `gorm:"not null"`
+	Expiry time.Time `gorm:"not null"`
+	Scope  string    `gorm:"not null"`
+	User   User      `gorm:"foreignKey:UserID"`
 }
 
-func Migrate(db *sql.DB, dir string) error {
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("migrate: %w", err)
-	}
-
-	if err := goose.Up(db, dir); err != nil {
-		return fmt.Errorf("goose up: %w", err)
-	}
-	return nil
+func AutoMigrate(db *gorm.DB) error {
+	return db.AutoMigrate(&User{}, &Workout{}, &WorkoutEntry{}, &Token{})
 }
