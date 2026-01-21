@@ -1,6 +1,8 @@
-import { ClerkProvider } from "@clerk/clerk-expo";
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
-import { Slot } from "expo-router";
+import PageLoader from "@/components/PageLoader";
+import { Slot, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
 
 // Expo SDK sometimes tries to enable keep-awake in dev via DevTools.
 // On some Android devices/emulators this can fail very early (no Activity yet),
@@ -26,7 +28,32 @@ export default function RootLayout() {
       tokenCache={tokenCache}
       publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
     >
-      <Slot />
+      <AuthGate />
     </ClerkProvider>
   );
+}
+
+function AuthGate() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const root = segments[0];
+    const inAuthGroup = root === "(auth)";
+    const inAppGroup = root === "(app)";
+
+    if (!isSignedIn && inAppGroup) {
+      router.replace("/(auth)/sign-in");
+    }
+
+    if (isSignedIn && inAuthGroup) {
+      router.replace("/(app)/home");
+    }
+  }, [isLoaded, isSignedIn, router, segments]);
+
+  if (!isLoaded) return <PageLoader />;
+  return <Slot />;
 }

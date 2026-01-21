@@ -2,7 +2,7 @@ import { useSignIn } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { styles } from "../../assets/styles/auth.styles";
 import { COLORS } from "../../constants/colors";
@@ -31,7 +31,12 @@ export default function Page() {
       // and redirect the user
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
-        router.replace("/");
+        Alert.alert("Success", "Signed in successfully.", [
+          {
+            text: "Continue",
+            onPress: () => router.replace("/(app)/home"),
+          },
+        ]);
       } else {
         // If the status isn't complete, check why. User might need to
         // complete further steps.
@@ -114,7 +119,7 @@ export default function Page() {
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>Don&apos;t have an account?</Text>
 
-          <Link href="/sign-up" asChild>
+          <Link href="/(auth)/sign-up" asChild>
             <TouchableOpacity>
               <Text style={styles.linkText}>Sign up</Text>
             </TouchableOpacity>

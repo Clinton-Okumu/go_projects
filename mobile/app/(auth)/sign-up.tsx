@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { COLORS } from "../../constants/colors";
 
@@ -50,6 +50,12 @@ export default function SignUpScreen() {
       // Send user an email with verification code
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
+      Alert.alert(
+        "Check your email",
+        "We sent a verification code to your email address.",
+        [{ text: "OK" }]
+      );
+
       // Set 'pendingVerification' to true to display second form
       // and capture OTP code
       setPendingVerification(true);
@@ -77,7 +83,12 @@ export default function SignUpScreen() {
       // and redirect the user
       if (signUpAttempt.status === "complete") {
         await setActive({ session: signUpAttempt.createdSessionId });
-        router.replace("/");
+        Alert.alert("Success", "Account created successfully.", [
+          {
+            text: "Continue",
+            onPress: () => router.replace("/(app)/home"),
+          },
+        ]);
       } else {
         // User is verified, but sign-up is not complete (e.g. missing fields)
         const missing = (signUpAttempt as any)?.missingFields;

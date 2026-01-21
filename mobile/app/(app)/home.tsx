@@ -1,11 +1,12 @@
 import { SignOutButton } from "@/components/SignOutButton";
+import SafeScreen from "@/components/SafeScreen";
+import { COLORS } from "@/constants/colors";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { getMe } from "../../lib/api";
 
-export default function HomePage() {
+export default function HomeScreen() {
   const { user } = useUser();
   const { isSignedIn, getToken } = useAuth();
   const [backendStatus, setBackendStatus] = useState<string>("");
@@ -34,23 +35,26 @@ export default function HomePage() {
   }, [getToken, isSignedIn]);
 
   return (
-    <View style={{ padding: 16 }}>
-      {isSignedIn ? (
-        <>
-          <Text>Hello {user?.emailAddresses?.[0]?.emailAddress}</Text>
-          {backendStatus ? <Text>Backend auth: {backendStatus}</Text> : null}
+    <SafeScreen>
+      <View style={{ flex: 1, padding: 16, backgroundColor: COLORS.background }}>
+        <Text style={{ fontSize: 18, fontWeight: "600", color: COLORS.text }}>
+          Home
+        </Text>
+
+        <Text style={{ marginTop: 8, color: COLORS.text }}>
+          Hello {user?.emailAddresses?.[0]?.emailAddress}
+        </Text>
+
+        {backendStatus ? (
+          <Text style={{ marginTop: 8, color: COLORS.textLight }}>
+            Backend auth: {backendStatus}
+          </Text>
+        ) : null}
+
+        <View style={{ marginTop: 16 }}>
           <SignOutButton />
-        </>
-      ) : (
-        <>
-          <Link href="/(auth)/sign-in">
-            <Text>Sign in</Text>
-          </Link>
-          <Link href="/(auth)/sign-up">
-            <Text>Sign up</Text>
-          </Link>
-        </>
-      )}
-    </View>
+        </View>
+      </View>
+    </SafeScreen>
   );
 }
