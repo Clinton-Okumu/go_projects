@@ -2,10 +2,11 @@ import { useSignIn } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { styles } from "../../assets/styles/auth.styles";
-import { COLORS } from "../../constants/colors";
+import AppText from "@/components/ui/AppText";
+import Button from "@/components/ui/Button";
+import TextField from "@/components/ui/TextField";
 
 export default function Page() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -59,47 +60,42 @@ export default function Page() {
       enableAutomaticScroll={true}
       extraScrollHeight={30}
     >
-      <View style={styles.container}>
+      <View className="flex-1 bg-app-bg px-5 justify-center">
         <Image
           source={require("../../assets/images/img1.png")}
-          style={styles.illustration}
+          style={{ height: 310, width: 300, resizeMode: "contain", alignSelf: "center" }}
         />
-        <Text style={styles.title}>Welcome Back</Text>
+        <AppText variant="title" className="my-4">Welcome Back</AppText>
 
         {error ? (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={20} color={COLORS.expense} />
-            <Text style={styles.errorText}>{error}</Text>
+          <View className="bg-red-100 p-3 rounded-lg border-l-4 border-danger mb-4 flex-row items-center">
+            <Ionicons name="alert-circle" size={20} color="#EF5350" />
+            <AppText className="ml-2 flex-1 text-sm">{error}</AppText>
             <TouchableOpacity onPress={() => setError("")}>
-              <Ionicons name="close" size={20} color={COLORS.textLight} />
+              <Ionicons name="close" size={20} color="#4FC3F7" />
             </TouchableOpacity>
           </View>
         ) : null}
 
-        <TextInput
-          style={[styles.input, error && styles.errorInput]}
+        <TextField
           autoCapitalize="none"
           value={emailAddress}
           placeholder="Email or username"
-          placeholderTextColor="#9A8478"
-          onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
+          onChangeText={(v) => setEmailAddress(v)}
+          error={Boolean(error)}
         />
 
-        <View style={styles.passwordField}>
-          <TextInput
-            style={[
-              styles.input,
-              styles.passwordInput,
-              error && styles.errorInput,
-            ]}
+        <View className="relative mt-4">
+          <TextField
             value={password}
             placeholder="Enter password"
-            placeholderTextColor="#9A8478"
             secureTextEntry={!showPassword}
-            onChangeText={(password) => setPassword(password)}
+            onChangeText={(v) => setPassword(v)}
+            error={Boolean(error)}
+            className="pr-14"
           />
           <TouchableOpacity
-            style={styles.passwordToggle}
+            className="absolute right-3 top-0 bottom-0 justify-center w-11 items-center"
             onPress={() => setShowPassword((v) => !v)}
             accessibilityRole="button"
             accessibilityLabel={showPassword ? "Hide password" : "Show password"}
@@ -107,21 +103,21 @@ export default function Page() {
             <Ionicons
               name={showPassword ? "eye-off-outline" : "eye-outline"}
               size={20}
-              color={COLORS.textLight}
+              color="#4FC3F7"
             />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={onSignInPress}>
-          <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
+        <View className="mt-5">
+          <Button title="Sign In" onPress={onSignInPress} />
+        </View>
 
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>Don&apos;t have an account?</Text>
+        <View className="flex-row justify-center items-center gap-2 mt-5">
+          <AppText>{"Don't have an account?"}</AppText>
 
           <Link href="/(auth)/sign-up" asChild>
             <TouchableOpacity>
-              <Text style={styles.linkText}>Sign up</Text>
+              <AppText variant="link">Sign up</AppText>
             </TouchableOpacity>
           </Link>
         </View>

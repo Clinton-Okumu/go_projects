@@ -1,18 +1,16 @@
-import SafeScreen from "@/components/SafeScreen";
-import { COLORS } from "@/constants/colors";
-import { Text, View } from "react-native";
+import AppText from "@/components/ui/AppText";
+import Screen from "@/components/ui/Screen";
+import { View } from "react-native";
 
 export default function LogScreen() {
   return (
-    <SafeScreen>
-      <View style={{ flex: 1, padding: 16, backgroundColor: COLORS.background }}>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: COLORS.text }}>
-          Log
-        </Text>
-        <Text style={{ marginTop: 8, color: COLORS.textLight }}>
+    <Screen className="px-4">
+      <View className="flex-1 pt-4">
+        <AppText variant="subtitle">Log</AppText>
+        <AppText variant="muted" className="mt-2">
           Your recent workouts will show here.
-        </Text>
+        </AppText>
       </View>
-    </SafeScreen>
+    </Screen>
   );
 }

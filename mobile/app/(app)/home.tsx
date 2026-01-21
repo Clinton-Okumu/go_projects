@@ -1,9 +1,9 @@
 import { SignOutButton } from "@/components/SignOutButton";
-import SafeScreen from "@/components/SafeScreen";
-import { COLORS } from "@/constants/colors";
+import AppText from "@/components/ui/AppText";
+import Screen from "@/components/ui/Screen";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { getMe } from "../../lib/api";
 
 export default function HomeScreen() {
@@ -35,26 +35,23 @@ export default function HomeScreen() {
   }, [getToken, isSignedIn]);
 
   return (
-    <SafeScreen>
-      <View style={{ flex: 1, padding: 16, backgroundColor: COLORS.background }}>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: COLORS.text }}>
-          Home
-        </Text>
-
-        <Text style={{ marginTop: 8, color: COLORS.text }}>
+    <Screen className="px-4">
+      <View className="flex-1 pt-4">
+        <AppText variant="subtitle">Home</AppText>
+        <AppText className="mt-2">
           Hello {user?.emailAddresses?.[0]?.emailAddress}
-        </Text>
+        </AppText>
 
         {backendStatus ? (
-          <Text style={{ marginTop: 8, color: COLORS.textLight }}>
+          <AppText variant="muted" className="mt-2">
             Backend auth: {backendStatus}
-          </Text>
+          </AppText>
         ) : null}
 
-        <View style={{ marginTop: 16 }}>
+        <View className="mt-4">
           <SignOutButton />
         </View>
       </View>
-    </SafeScreen>
+    </Screen>
   );
 }

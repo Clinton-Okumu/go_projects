@@ -1,11 +1,9 @@
-import { View, ActivityIndicator } from "react-native";
-import { styles } from "../assets/styles/home.styles";
-import { COLORS } from "../constants/colors";
+import { ActivityIndicator, View } from "react-native";
 
 const PageLoader = () => {
     return (
-        <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
+        <View className="flex-1 items-center justify-center bg-app-bg">
+            <ActivityIndicator size="large" color="#0277BD" />
         </View>
     );
 };
