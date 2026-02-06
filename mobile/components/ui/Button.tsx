@@ -7,6 +7,7 @@ type Props = TouchableOpacityProps & {
   title: string;
   variant?: Variant;
   loading?: boolean;
+  className?: string;
 };
 
 const container = {
@@ -19,7 +20,14 @@ const text = {
   ghost: "text-brand font-semibold text-lg",
 } satisfies Record<Variant, string>;
 
-export default function Button({ title, variant = "primary", loading, disabled, ...props }: Props) {
+export default function Button({
+  title,
+  variant = "primary",
+  loading,
+  disabled,
+  className,
+  ...props
+}: Props) {
   const isDisabled = Boolean(disabled || loading);
 
   return (
@@ -27,7 +35,13 @@ export default function Button({ title, variant = "primary", loading, disabled, 
       accessibilityRole="button"
       activeOpacity={0.85}
       disabled={isDisabled}
-      className={[container[variant], isDisabled ? "opacity-60" : ""].join(" ")}
+      className={[
+        container[variant],
+        isDisabled ? "opacity-60" : "",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       {...props}
     >
       {loading ? <ActivityIndicator color="#FFFFFF" /> : null}
