@@ -40,6 +40,7 @@ export default function SearchBar({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={COLORS.textLight}
+        selectionColor={COLORS.primary}
         returnKeyType="search"
         onSubmitEditing={onSubmit}
         className="flex-1 text-[15px] text-app-text"

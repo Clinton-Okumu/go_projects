@@ -55,12 +55,18 @@ export default function SettingsScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="pt-4">
-            <View className="bg-brand/10 border border-brand/10 rounded-3xl p-4 overflow-hidden">
+            <View className="bg-brand/10 border border-brand/10 rounded-3xl p-4 overflow-hidden shadow-sm">
               <View pointerEvents="none" className="absolute -top-16 -right-20 w-56 h-56 rounded-full bg-white/50" />
 
-              <AppText className="text-[26px] font-bold text-app-text">Settings</AppText>
+              <View className="px-3 py-1 rounded-full bg-app-card border border-app-border self-start">
+                <AppText className="text-[11px] uppercase tracking-wider text-app-muted font-semibold">
+                  Account
+                </AppText>
+              </View>
+
+              <AppText className="mt-3 text-[26px] font-bold text-app-text">Settings</AppText>
               <AppText className="mt-1 text-[12px] text-app-muted">
-                Manage your ForgeFit experience
+                Manage your ClintFit experience
               </AppText>
 
               <Pressable
@@ -69,7 +75,7 @@ export default function SettingsScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Account"
               >
-                <View className="w-12 h-12 rounded-2xl bg-app-bg border border-app-border items-center justify-center">
+                <View className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/20 items-center justify-center">
                   <AppText className="text-[14px] font-bold text-app-text">{initials}</AppText>
                 </View>
 
@@ -84,7 +90,7 @@ export default function SettingsScreen() {
                   ) : null}
                 </View>
 
-                <View className="w-10 h-10 rounded-2xl bg-app-bg border border-app-border items-center justify-center">
+                <View className="w-10 h-10 rounded-2xl bg-brand/10 border border-brand/20 items-center justify-center">
                   <AppText className="text-[12px] font-semibold text-brand">Edit</AppText>
                 </View>
               </Pressable>
@@ -97,33 +103,33 @@ export default function SettingsScreen() {
               <SettingsRow
                 title="Profile"
                 iconName="person-outline"
-                iconBgClassName="bg-sky-100"
-                iconColor="#0277BD"
+                iconBgClassName="bg-brand/10"
+                iconColor={COLORS.primary}
                 onPress={() => Alert.alert("Profile", "Coming soon")}
               />
               <View className="h-px bg-app-border" />
               <SettingsRow
                 title="Notifications"
                 iconName="notifications-outline"
-                iconBgClassName="bg-amber-100"
-                iconColor="#F57C00"
+                iconBgClassName="bg-brand/10"
+                iconColor={COLORS.primary}
                 onPress={() => Alert.alert("Notifications", "Coming soon")}
               />
               <View className="h-px bg-app-border" />
               <SettingsRow
                 title="App Theme"
                 iconName="color-palette-outline"
-                iconBgClassName="bg-indigo-100"
-                iconColor="#3949AB"
-                rightText="Ocean"
+                iconBgClassName="bg-brand/10"
+                iconColor={COLORS.primary}
+                rightText="Current"
                 onPress={() => Alert.alert("Theme", "Coming soon")}
               />
               <View className="h-px bg-app-border" />
               <SettingsRow
                 title="Help & Support"
                 iconName="help-circle-outline"
-                iconBgClassName="bg-emerald-100"
-                iconColor="#2E7D32"
+                iconBgClassName="bg-brand/10"
+                iconColor={COLORS.primary}
                 onPress={() => Alert.alert("Support", "Coming soon")}
               />
             </View>
@@ -144,7 +150,7 @@ export default function SettingsScreen() {
           </View>
 
           <View className="mt-8 items-center">
-            <AppText className="text-[11px] text-app-muted">ForgeFit v2.4.1</AppText>
+            <AppText className="text-[11px] text-app-muted">ClintFit v2.4.1</AppText>
             <AppText className="mt-1 text-[10px] text-app-muted uppercase tracking-wider">
               Backend: Auth connected
             </AppText>

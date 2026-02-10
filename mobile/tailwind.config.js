@@ -1,20 +1,22 @@
 /** @type {import('tailwindcss').Config} */
+const { COLORS } = require("./constants/colors.js");
+
 module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
       colors: {
-        brand: "#0277BD",
+        brand: COLORS.primary,
         app: {
-          bg: "#E1F5FE",
-          text: "#01579B",
-          border: "#B3E5FC",
-          muted: "#4FC3F7",
-          card: "#FFFFFF",
+          bg: COLORS.background,
+          text: COLORS.text,
+          border: COLORS.border,
+          muted: COLORS.textLight,
+          card: COLORS.card,
         },
-        danger: "#EF5350",
-        success: "#26A69A",
+        danger: COLORS.expense,
+        success: COLORS.income,
       },
     },
   },

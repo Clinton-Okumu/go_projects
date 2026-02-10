@@ -69,7 +69,7 @@ export default function HomeScreen() {
             <AppText className="text-[16px] font-semibold text-app-text">Resume Training</AppText>
             <Pressable
               onPress={() => router.push("/(app)/workouts")}
-              className="px-3 py-1 rounded-full bg-app-card border border-app-border"
+              className="px-3 py-1 rounded-full bg-brand/5 border border-brand/20"
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="View plan"
@@ -104,7 +104,7 @@ export default function HomeScreen() {
             <AppText className="text-[16px] font-semibold text-app-text">Recent Activity</AppText>
             <Pressable
               onPress={() => router.push("/(app)/log")}
-              className="px-3 py-1 rounded-full bg-app-card border border-app-border"
+              className="px-3 py-1 rounded-full bg-brand/5 border border-brand/20"
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="View history"

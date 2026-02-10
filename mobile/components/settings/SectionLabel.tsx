@@ -6,7 +6,7 @@ type Props = {
 
 export default function SectionLabel({ title }: Props) {
   return (
-    <AppText className="text-[10px] uppercase tracking-wider text-app-muted font-semibold">
+    <AppText className="text-[11px] uppercase tracking-wider text-app-muted font-semibold">
       {title}
     </AppText>
   );

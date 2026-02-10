@@ -37,7 +37,8 @@ export default function SetRow({
           keyboardType="numeric"
           placeholder="---"
           placeholderTextColor={COLORS.textLight}
-          className="bg-white border border-app-border rounded-xl px-3 py-2 text-[13px] text-app-text text-center"
+          selectionColor={COLORS.primary}
+          className="bg-app-card border border-app-border rounded-xl px-3 py-2 text-[13px] text-app-text text-center"
         />
       </View>
 
@@ -50,7 +51,8 @@ export default function SetRow({
           keyboardType="numeric"
           placeholder="---"
           placeholderTextColor={COLORS.textLight}
-          className="bg-white border border-app-border rounded-xl px-3 py-2 text-[13px] text-app-text text-center"
+          selectionColor={COLORS.primary}
+          className="bg-app-card border border-app-border rounded-xl px-3 py-2 text-[13px] text-app-text text-center"
         />
       </View>
 
@@ -67,7 +69,7 @@ export default function SetRow({
           accessibilityRole="button"
           accessibilityLabel={done ? "Mark set incomplete" : "Mark set done"}
         >
-          <Ionicons name="checkmark" size={16} color={done ? "#FFFFFF" : COLORS.textLight} />
+          <Ionicons name="checkmark" size={16} color={done ? COLORS.white : COLORS.textLight} />
         </Pressable>
       </View>
     </View>

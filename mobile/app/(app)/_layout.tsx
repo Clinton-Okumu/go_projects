@@ -14,14 +14,32 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        sceneContainerStyle: {
-          backgroundColor: COLORS.background,
-        },
-        tabBarActiveTintColor: COLORS.text,
-        tabBarInactiveTintColor: "#8a8a8a",
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textLight,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          borderTopColor: "#e6e6e6",
-          backgroundColor: "#ffffff",
+          position: "absolute",
+          marginHorizontal: 16,
+          marginBottom: 12,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 10,
+          borderRadius: 22,
+          borderTopWidth: 0,
+          backgroundColor: COLORS.card,
+          shadowColor: COLORS.shadow,
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 8,
+        },
+        tabBarItemStyle: {
+          borderRadius: 16,
+          paddingVertical: 2,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
         },
       }}
     >

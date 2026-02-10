@@ -5,23 +5,10 @@ import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import PageLoader from "@/components/PageLoader";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
+import { LogBox } from "react-native";
 
-// Expo SDK sometimes tries to enable keep-awake in dev via DevTools.
-// On some Android devices/emulators this can fail very early (no Activity yet),
-// surfacing as an annoying red screen even though the app works.
-// Swallow ONLY this specific dev error.
 if (__DEV__) {
-  const msg = "Unable to activate keep awake";
-  const g: any = global;
-  const ErrorUtils = g?.ErrorUtils;
-  if (ErrorUtils?.getGlobalHandler && ErrorUtils?.setGlobalHandler) {
-    const prev = ErrorUtils.getGlobalHandler();
-    ErrorUtils.setGlobalHandler((err: any, isFatal: boolean) => {
-      const text = String(err?.message || err);
-      if (text.includes(msg)) return;
-      prev(err, isFatal);
-    });
-  }
+  LogBox.ignoreLogs(["SafeAreaView has been deprecated", "Unable to activate keep awake"]);
 }
 
 export default function RootLayout() {

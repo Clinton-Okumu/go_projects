@@ -1,3 +1,4 @@
+import { COLORS } from "@/constants/colors";
 import { ActivityIndicator, TouchableOpacity, TouchableOpacityProps } from "react-native";
 import AppText from "@/components/ui/AppText";
 
@@ -11,13 +12,13 @@ type Props = TouchableOpacityProps & {
 };
 
 const container = {
-  primary: "bg-brand rounded-xl px-4 py-4 items-center",
-  ghost: "rounded-xl px-4 py-4 items-center",
+  primary: "bg-brand rounded-2xl px-4 py-4 items-center shadow-sm",
+  ghost: "bg-app-card border border-app-border rounded-2xl px-4 py-4 items-center",
 } satisfies Record<Variant, string>;
 
 const text = {
-  primary: "text-white font-semibold text-lg",
-  ghost: "text-brand font-semibold text-lg",
+  primary: "text-white font-semibold text-[16px]",
+  ghost: "text-brand font-semibold text-[16px]",
 } satisfies Record<Variant, string>;
 
 export default function Button({
@@ -44,7 +45,9 @@ export default function Button({
         .join(" ")}
       {...props}
     >
-      {loading ? <ActivityIndicator color="#FFFFFF" /> : null}
+      {loading ? (
+        <ActivityIndicator color={variant === "primary" ? COLORS.white : COLORS.primary} />
+      ) : null}
       {!loading ? <AppText className={text[variant]}>{title}</AppText> : null}
     </TouchableOpacity>
   );
